@@ -1,152 +1,101 @@
 <template>
-  <DxResponsiveBox
-    v-if="itemLength > 0"
-    :screen-by-width="screen"
-  >
-    <DxCol
-      v-for="index in lgColCount"
-      :key="`lg-col-${index}`"
-      :ratio="1"
-      screen="lg"
-    />
-    <DxRow
-      v-for="index in Math.ceil(itemLength / lgColCount)"
-      :key="`lg-row-${index}`"
-      :ratio="1"
-      screen="lg"
-    />
-    <DxCol
-      v-for="index in mdColCount"
-      :key="`md-col-${index}`"
-      :ratio="1"
-      screen="md"
-    />
-    <DxRow
-      v-for="index in Math.ceil(itemLength / mdColCount)"
-      :key="`md-row-${index}`"
-      :ratio="1"
-      screen="md"
-    />
-    <DxCol
-      v-for="index in smColCount"
-      :key="`sm-col-${index}`"
-      :ratio="1"
-      screen="sm"
-    />
-    <DxRow
-      v-for="index in Math.ceil(itemLength / smColCount)"
-      :key="`sm-row-${index}`"
-      :ratio="1"
-      screen="sm"
-    />
-    <DxCol
-      v-for="index in xsColCount"
-      :key="`xs-col-${index}`"
-      :ratio="1"
-      screen="xs"
-    />
-    <DxRow
-      v-for="index in Math.ceil(itemLength / xsColCount)"
-      :key="`xs-row-${index}`"
-      :ratio="1"
-      screen="xs"
-    />
-    <DxItem
-      v-for="(item, index) in items"
-      :key="item.id"
-    >
-      <DxLocation
-        :row="calculateRow(index, lgColCount)"
-        :col="calculateCol(index, lgColCount)"
-        screen="lg"
-      />
-      <DxLocation
-        :row="calculateRow(index, mdColCount)"
-        :col="calculateCol(index, mdColCount)"
-        screen="md"
-      />
-      <DxLocation
-        :row="calculateRow(index, smColCount)"
-        :col="calculateCol(index, smColCount)"
-        screen="sm"
-      />
-      <DxLocation
-        :row="calculateRow(index, xsColCount)"
-        :col="calculateCol(index, xsColCount)"
-        screen="xs"
-      />
-      <template #default>
-        <slot
-          name="card"
-          :item="item"
-        />
-      </template>
-    </DxItem>
-  </DxResponsiveBox>
+  <div>
+    <div v-if="itemsLength > 0">
+      <v-row
+        v-for="(x, i) in rowCount"
+        :key="i"
+      >
+        <v-col
+          v-for="(y, j) in calculateColCount(i)"
+          :key="j"
+          :xl="12 / xlColCount"
+          :lg="12 / lgColCount"
+          :md="12 / mdColCount"
+          :sm="12 / smColCount"
+          :xs="12 / xsColCount"
+        >
+          <slot
+            name="card"
+            :item="items[colCount * i + y - 1]"
+          />
+        </v-col>
+      </v-row>
+    </div>
+  </div>
 </template>
 
 <script>
-import {
-  DxResponsiveBox,
-  DxItem,
-  DxCol,
-  DxRow,
-  DxLocation
-} from 'devextreme-vue/responsive-box'
 
 export default {
-  components: {
-    DxResponsiveBox,
-    DxCol,
-    DxRow,
-    DxLocation,
-    DxItem
-  },
   props: {
     items: {
       type: Array,
       required: true
     },
-    lgColCount: {
+    xlColCount: {
       type: Number,
       default: 4
     },
-    mdColCount: {
+    lgColCount: {
       type: Number,
       default: 3
     },
-    smColCount: {
+    mdColCount: {
       type: Number,
       default: 2
+    },
+    smColCount: {
+      type: Number,
+      default: 1
     },
     xsColCount: {
       type: Number,
       default: 1
     }
   },
-  computed: {
-    itemLength () {
-      return this.items.length
+  data () {
+    return {
+      colCount: 5
     }
   },
+  computed: {
+    itemsLength () {
+      return this.items.length
+    },
+    rowCount () {
+      return Math.ceil(this.itemsLength / this.colCount)
+    }
+  },
+  mounted () {
+    this.setColCountValue(window.innerWidth)
+    window.addEventListener('resize', () => {
+      this.setColCountValue(window.innerWidth)
+    })
+  },
   methods: {
-    screen (width) {
-      if (width < 640) {
-        return 'xs'
+    setColCountValue (width) {
+      if (width > 1904) {
+        // xl
+        this.colCount = this.xlColCount
+      } else if (width > 1264) {
+        // lg
+        this.colCount = this.lgColCount
+      } else if (width > 960) {
+        // md
+        this.colCount = this.mdColCount
+      } else if (width > 600) {
+        // sm
+        this.colCount = this.smColCount
+      } else {
+        // xs
+        this.colCount = this.xsColCount
       }
-      if (width < 1280) {
-        return 'sm'
-      }
-      if (width < 1920) {
-        return 'md'
-      }
-      return 'lg'
     },
-    calculateRow (index, factor) {
-      return Math.floor(index / factor)
-    },
-    calculateCol (index, factor) {
-      return index % factor
+    calculateColCount (rowIndex) {
+      if (rowIndex * this.colCount + this.colCount > this.itemsLength) {
+        return this.itemsLength % this.colCount
+      }
+      return this.colCount
     }
   }
 }
